@@ -1,0 +1,18 @@
+{
+  "buildCommand": "pnpm --filter @workspace/daily-finds-pk run build",
+  "outputDirectory": "artifacts/daily-finds-pk/dist/public",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": null,
+  "functions": {
+    "api/import/product.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+# Ignore build artifacts from other packages — Vercel only needs the frontend output
+artifacts/api-server/dist
+artifacts/mockup-sandbox
+
+# Local dev / Replit
+.replit
+.local
+.upm
+replit.nix
+*.replit
+
+# Test / debug
+*.log

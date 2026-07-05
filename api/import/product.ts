@@ -1,16 +1,29 @@
-import { Router, type IRouter } from "express";
+/**
+ * Vercel Node.js serverless function — POST /api/import/product
+ *
+ * Scrapes a product page (Daraz, affiliate redirect, etc.) and returns
+ * structured product data. Uses SSRF protection before fetching.
+ *
+ * Vercel auto-parses JSON request bodies and provides .status()/.json()
+ * on the response, so this function has no Express dependency.
+ */
+
 import dns from "node:dns/promises";
 
-const router: IRouter = Router();
+// ---------------------------------------------------------------------------
+// Vercel function config
+// ---------------------------------------------------------------------------
+
+export const config = { maxDuration: 30 };
 
 // ---------------------------------------------------------------------------
-// SSRF protection — block requests to private / internal / loopback addresses
+// SSRF protection
 // ---------------------------------------------------------------------------
 
 const BLOCKED_HOSTNAMES = new Set([
   "localhost",
   "metadata.google.internal",
-  "169.254.169.254", // AWS/GCP/Azure instance metadata
+  "169.254.169.254",
 ]);
 
 function isPrivateIP(ip: string): boolean {
@@ -18,13 +31,18 @@ function isPrivateIP(ip: string): boolean {
   if (ip.startsWith("::ffff:")) return isPrivateIP(ip.slice(7));
 
   // IPv6 loopback, link-local, unique-local
-  if (ip === "::1" || ip.startsWith("fe80:") || ip.startsWith("fc") || ip.startsWith("fd")) return true;
+  if (
+    ip === "::1" ||
+    ip.startsWith("fe80:") ||
+    ip.startsWith("fc") ||
+    ip.startsWith("fd")
+  )
+    return true;
 
   // IPv4 private / special-use ranges
   const parts = ip.split(".").map(Number);
   if (parts.length !== 4 || parts.some((p) => isNaN(p))) return false;
   const [a, b] = parts;
-
   return (
     a === 10 ||                          // 10.0.0.0/8
     (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12
@@ -40,15 +58,12 @@ async function assertSafeHost(hostname: string): Promise<void> {
   if (BLOCKED_HOSTNAMES.has(h)) {
     throw new Error(`Blocked hostname: ${hostname}`);
   }
-
-  // Resolve all IPs and block if any resolves to a private range
   let records: { address: string }[];
   try {
     records = await dns.lookup(hostname, { all: true });
   } catch {
     throw new Error(`Cannot resolve hostname: ${hostname}`);
   }
-
   for (const { address } of records) {
     if (isPrivateIP(address)) {
       throw new Error(`Hostname resolves to a private IP: ${address}`);
@@ -59,7 +74,8 @@ async function assertSafeHost(hostname: string): Promise<void> {
 const FETCH_HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
   "Accept-Language": "en-US,en;q=0.9",
   "Cache-Control": "no-cache",
   Pragma: "no-cache",
@@ -123,30 +139,35 @@ type ExtractedProduct = {
 };
 
 const CATEGORY_PATTERNS: Array<[RegExp, string]> = [
-  [/kitchen|cook|food|cup|mug|kettle|frother|blender|utensil|pan|pot|baking|cutlery|dishes|crockery|spoon|fork/i, "Kitchen Gadgets"],
-  [/furniture|sofa|couch|chair|table|bed|cabinet|wardrobe|shelf|bookcase|rack|mattress|drawer/i, "Furniture"],
-  [/office|desk|organizer|stationery|pen|notebook|whiteboard|stapler|filing|printer/i, "Office Setup"],
-  [/beauty|skin|hair|makeup|cosmetic|serum|moisturizer|face|lip|eyelash|perfume|cream|lotion|mascara|foundation/i, "Beauty"],
-  [/electronic|phone|mobile|tablet|bluetooth|wireless|earbuds|earphone|headphone|speaker|camera|charger|power.?bank|usb|laptop|computer|watch|tv|television/i, "Electronics"],
-  [/home|decor|vase|candle|cushion|curtain|wall|lamp|living|aesthetic|plant|frame|mirror|clock|rug|carpet|mat|pillow|throw/i, "Home Decor"],
+  [
+    /kitchen|cook|food|cup|mug|kettle|frother|blender|utensil|pan|pot|baking|cutlery|dishes|crockery|spoon|fork/i,
+    "Kitchen Gadgets",
+  ],
+  [
+    /furniture|sofa|couch|chair|table|bed|cabinet|wardrobe|shelf|bookcase|rack|mattress|drawer/i,
+    "Furniture",
+  ],
+  [
+    /office|desk|organizer|stationery|pen|notebook|whiteboard|stapler|filing|printer/i,
+    "Office Setup",
+  ],
+  [
+    /beauty|skin|hair|makeup|cosmetic|serum|moisturizer|face|lip|eyelash|perfume|cream|lotion|mascara|foundation/i,
+    "Beauty",
+  ],
+  [
+    /electronic|phone|mobile|tablet|bluetooth|wireless|earbuds|earphone|headphone|speaker|camera|charger|power.?bank|usb|laptop|computer|watch|tv|television/i,
+    "Electronics",
+  ],
+  [
+    /home|decor|vase|candle|cushion|curtain|wall|lamp|living|aesthetic|plant|frame|mirror|clock|rug|carpet|mat|pillow|throw/i,
+    "Home Decor",
+  ],
 ];
 
 function inferCategory(text: string): string | null {
   for (const [pattern, category] of CATEGORY_PATTERNS) {
     if (pattern.test(text)) return category;
-  }
-  return null;
-}
-
-function extractMeta(html: string, attr: string, value: string): string | null {
-  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const patterns = [
-    new RegExp(`<meta[^>]+${attr}=["']${escaped}["'][^>]+content=["']([^"']+)["']`, "i"),
-    new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+${attr}=["']${escaped}["']`, "i"),
-  ];
-  for (const p of patterns) {
-    const m = html.match(p);
-    if (m?.[1]) return decodeHTMLEntities(m[1].trim());
   }
   return null;
 }
@@ -162,6 +183,25 @@ function decodeHTMLEntities(text: string): string {
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
 }
 
+function extractMeta(html: string, attr: string, value: string): string | null {
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patterns = [
+    new RegExp(
+      `<meta[^>]+${attr}=["']${escaped}["'][^>]+content=["']([^"']+)["']`,
+      "i",
+    ),
+    new RegExp(
+      `<meta[^>]+content=["']([^"']+)["'][^>]+${attr}=["']${escaped}["']`,
+      "i",
+    ),
+  ];
+  for (const p of patterns) {
+    const m = html.match(p);
+    if (m?.[1]) return decodeHTMLEntities(m[1].trim());
+  }
+  return null;
+}
+
 function parsePrice(raw: string | null | undefined): number | null {
   if (!raw) return null;
   const cleaned = String(raw).replace(/[^\d.]/g, "");
@@ -171,7 +211,8 @@ function parsePrice(raw: string | null | undefined): number | null {
 
 function extractJsonLd(html: string): Partial<ExtractedProduct> {
   const result: Partial<ExtractedProduct> = {};
-  const scriptRe = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  const scriptRe =
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   let m: RegExpExecArray | null;
   while ((m = scriptRe.exec(html)) !== null) {
     try {
@@ -179,13 +220,19 @@ function extractJsonLd(html: string): Partial<ExtractedProduct> {
       const nodes: unknown[] = Array.isArray(data)
         ? data
         : data?.["@graph"]
-        ? data["@graph"]
-        : [data];
+          ? data["@graph"]
+          : [data];
       for (const node of nodes) {
-        if (typeof node !== "object" || node === null || !("@type" in node)) continue;
+        if (
+          typeof node !== "object" ||
+          node === null ||
+          !("@type" in node)
+        )
+          continue;
         const type = (node as Record<string, unknown>)["@type"];
         const isProduct =
-          type === "Product" || (Array.isArray(type) && type.includes("Product"));
+          type === "Product" ||
+          (Array.isArray(type) && type.includes("Product"));
         if (!isProduct) continue;
 
         const n = node as Record<string, unknown>;
@@ -198,7 +245,11 @@ function extractJsonLd(html: string): Partial<ExtractedProduct> {
           if (typeof n.image === "string") result.imageUrl = n.image;
           else if (Array.isArray(n.image) && typeof n.image[0] === "string")
             result.imageUrl = n.image[0];
-          else if (n.image && typeof n.image === "object" && "url" in (n.image as object))
+          else if (
+            n.image &&
+            typeof n.image === "object" &&
+            "url" in (n.image as object)
+          )
             result.imageUrl = (n.image as { url: string }).url;
         }
 
@@ -213,7 +264,7 @@ function extractJsonLd(html: string): Partial<ExtractedProduct> {
         if (result.name) break;
       }
     } catch {
-      // ignore invalid JSON-LD
+      // ignore invalid JSON-LD blocks
     }
     if (result.name) break;
   }
@@ -223,22 +274,28 @@ function extractJsonLd(html: string): Partial<ExtractedProduct> {
 function extractDarazData(html: string): Partial<ExtractedProduct> {
   const result: Partial<ExtractedProduct> = {};
 
-  const pdMatch = html.match(/window\.pageData\s*=\s*(\{[\s\S]{0,60000}?\})\s*(?:;|<\/script>)/);
+  const pdMatch = html.match(
+    /window\.pageData\s*=\s*(\{[\s\S]{0,60000}?\})\s*(?:;|<\/script>)/,
+  );
   if (pdMatch) {
     try {
       const data = JSON.parse(pdMatch[1]) as Record<string, unknown>;
       const mods = data?.mods as Record<string, unknown> | undefined;
       const titleMod = mods?.title as Record<string, unknown> | undefined;
-      if (typeof titleMod?.title === "string") result.name = decodeHTMLEntities(titleMod.title);
+      if (typeof titleMod?.title === "string")
+        result.name = decodeHTMLEntities(titleMod.title);
 
-      const imagesMod = (mods?.images ?? mods?.itemImages) as Record<string, unknown> | undefined;
+      const imagesMod = (mods?.images ?? mods?.itemImages) as
+        | Record<string, unknown>
+        | undefined;
       const imgList = imagesMod?.list as unknown[] | undefined;
       if (Array.isArray(imgList) && imgList.length > 0) {
         const first = imgList[0];
         if (typeof first === "string") result.imageUrl = first;
         else if (first && typeof first === "object") {
           const f = first as Record<string, unknown>;
-          result.imageUrl = (f.image ?? f.url ?? f.src) as string | undefined ?? null;
+          result.imageUrl =
+            ((f.image ?? f.url ?? f.src) as string | undefined) ?? null;
         }
       }
 
@@ -253,22 +310,29 @@ function extractDarazData(html: string): Partial<ExtractedProduct> {
     }
   }
 
-  // Next.js __NEXT_DATA__ fallback (works for some Daraz affiliate pages)
-  const nextMatch = html.match(/<script id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  // __NEXT_DATA__ fallback
+  const nextMatch = html.match(
+    /<script id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i,
+  );
   if (nextMatch && !result.name) {
     try {
       const nextData = JSON.parse(nextMatch[1]) as Record<string, unknown>;
       const pageProps = (nextData?.props as Record<string, unknown>)
         ?.pageProps as Record<string, unknown> | undefined;
-      const product = (pageProps?.product ?? pageProps?.item ?? pageProps?.data) as
-        | Record<string, unknown>
-        | undefined;
+      const product = (
+        pageProps?.product ??
+        pageProps?.item ??
+        pageProps?.data
+      ) as Record<string, unknown> | undefined;
       if (product) {
         if (typeof product.name === "string") result.name = product.name;
         else if (typeof product.title === "string") result.name = product.title;
         if (!result.price)
-          result.price = parsePrice(String(product.price ?? product.salePrice ?? ""));
-        if (typeof product.description === "string") result.description = product.description;
+          result.price = parsePrice(
+            String(product.price ?? product.salePrice ?? ""),
+          );
+        if (typeof product.description === "string")
+          result.description = product.description;
       }
     } catch {
       // ignore
@@ -282,20 +346,31 @@ function cleanProductName(raw: string | null | undefined): string | null {
   if (!raw) return null;
   return (
     raw
-      .replace(/\s*[\|–\-]\s*(daraz|shopify|shop|buy|online|pk\.com|\.pk|\.com|price in pakistan).*$/i, "")
+      .replace(
+        /\s*[\|–\-]\s*(daraz|shopify|shop|buy|online|pk\.com|\.pk|\.com|price in pakistan).*$/i,
+        "",
+      )
       .replace(/\s{2,}/g, " ")
       .trim() || null
   );
 }
 
 // ---------------------------------------------------------------------------
-// Route
+// Handler
 // ---------------------------------------------------------------------------
 
 const MAX_RESPONSE_BYTES = 3 * 1024 * 1024; // 3 MB cap
 
-router.post("/import/product", async (req, res): Promise<void> => {
-  const rawUrl = typeof req.body?.url === "string" ? req.body.url.trim() : null;
+// Vercel provides req.body (auto-parsed JSON) and res with .status()/.json()
+export default async function handler(req: any, res: any): Promise<void> {
+  // Only allow POST
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  const rawUrl =
+    typeof req.body?.url === "string" ? req.body.url.trim() : null;
 
   if (!rawUrl) {
     res.status(400).json({ error: "A valid URL is required." });
@@ -305,23 +380,28 @@ router.post("/import/product", async (req, res): Promise<void> => {
   let parsedUrl: URL;
   try {
     parsedUrl = new URL(rawUrl);
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) throw new Error("Invalid protocol");
+    if (!["http:", "https:"].includes(parsedUrl.protocol))
+      throw new Error("Invalid protocol");
   } catch {
-    res.status(400).json({ error: "Please provide a valid http or https URL." });
+    res
+      .status(400)
+      .json({ error: "Please provide a valid http or https URL." });
     return;
   }
 
-  // SSRF guard: resolve hostname and block private / internal IPs
+  // SSRF guard
   try {
     await assertSafeHost(parsedUrl.hostname);
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    req.log.warn({ hostname: parsedUrl.hostname, reason: msg }, "SSRF guard blocked request");
-    res.status(400).json({ error: "This URL cannot be fetched for security reasons." });
+    const reason = err instanceof Error ? err.message : String(err);
+    console.warn("[import] SSRF guard blocked:", parsedUrl.hostname, reason);
+    res
+      .status(400)
+      .json({ error: "This URL cannot be fetched for security reasons." });
     return;
   }
 
-  req.log.info({ url: rawUrl }, "Starting product import");
+  console.info("[import] Starting product import:", rawUrl);
 
   let html: string;
   let finalUrl = rawUrl;
@@ -334,7 +414,7 @@ router.post("/import/product", async (req, res): Promise<void> => {
     finalUrl = resolvedUrl;
 
     if (!response.ok) {
-      req.log.warn({ status: response.status, url: finalUrl }, "Page fetch failed");
+      console.warn("[import] Page fetch failed:", response.status, finalUrl);
       res.status(422).json({
         error: `The product page returned an error (HTTP ${response.status}). You can enter details manually.`,
         affiliateLink: rawUrl,
@@ -343,15 +423,19 @@ router.post("/import/product", async (req, res): Promise<void> => {
     }
 
     const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
+    if (
+      !contentType.includes("text/html") &&
+      !contentType.includes("text/plain")
+    ) {
       res.status(422).json({
-        error: "The URL does not point to a web page. Please enter details manually.",
+        error:
+          "The URL does not point to a web page. Please enter details manually.",
         affiliateLink: rawUrl,
       });
       return;
     }
 
-    // Stream and cap response to avoid memory exhaustion
+    // Stream with byte cap to avoid memory exhaustion
     const reader = response.body?.getReader();
     if (!reader) {
       html = await response.text();
@@ -364,26 +448,30 @@ router.post("/import/product", async (req, res): Promise<void> => {
         if (value) {
           totalBytes += value.byteLength;
           chunks.push(value);
-          if (totalBytes > MAX_RESPONSE_BYTES) break; // stop reading, parse what we have
+          if (totalBytes > MAX_RESPONSE_BYTES) break;
         }
       }
       reader.cancel().catch(() => undefined);
-      html = new TextDecoder().decode(
-        chunks.reduce((acc, chunk) => {
-          const merged = new Uint8Array(acc.length + chunk.length);
-          merged.set(acc);
-          merged.set(chunk, acc.length);
-          return merged;
-        }, new Uint8Array(0))
-      );
+      const merged = new Uint8Array(totalBytes);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      html = new TextDecoder().decode(merged);
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    req.log.warn({ err, url: rawUrl }, "Fetch failed");
+    console.warn("[import] Fetch failed:", msg);
 
-    if (msg.includes("timeout") || msg.includes("abort") || msg.includes("TimeoutError")) {
+    if (
+      msg.includes("timeout") ||
+      msg.includes("abort") ||
+      msg.includes("TimeoutError")
+    ) {
       res.status(422).json({
-        error: "The page took too long to load. Please enter details manually.",
+        error:
+          "The page took too long to load. Please enter details manually.",
         affiliateLink: rawUrl,
       });
       return;
@@ -409,9 +497,10 @@ router.post("/import/product", async (req, res): Promise<void> => {
     extractMeta(html, "name", "price");
 
   const titleTagMatch = html.match(/<title[^>]*>([^<]{1,300})<\/title>/i);
-  const pageTitle = titleTagMatch ? decodeHTMLEntities(titleTagMatch[1].trim()) : null;
+  const pageTitle = titleTagMatch
+    ? decodeHTMLEntities(titleTagMatch[1].trim())
+    : null;
 
-  // First large product-looking image
   let fallbackImage: string | null = null;
   const imgRe = /<img[^>]+src=["']([^"']{20,})["'][^>]*>/gi;
   let imgM: RegExpExecArray | null;
@@ -427,10 +516,11 @@ router.post("/import/product", async (req, res): Promise<void> => {
     }
   }
 
-  // Merge with priority: JSON-LD > Daraz > OG > fallback
   const rawName = jsonLd.name || darazData.name || ogTitle || pageTitle;
-  const imageUrl = jsonLd.imageUrl || darazData.imageUrl || ogImage || fallbackImage;
-  const description = jsonLd.description || darazData.description || ogDescription;
+  const imageUrl =
+    jsonLd.imageUrl || darazData.imageUrl || ogImage || fallbackImage;
+  const description =
+    jsonLd.description || darazData.description || ogDescription;
   const price = jsonLd.price || darazData.price || parsePrice(ogPrice);
 
   const name = cleanProductName(rawName);
@@ -446,12 +536,11 @@ router.post("/import/product", async (req, res): Promise<void> => {
     affiliateLink: rawUrl,
   };
 
-  req.log.info(
-    { name: extracted.name, price: extracted.price, category: extracted.category },
-    "Product import complete"
-  );
+  console.info("[import] Complete:", {
+    name: extracted.name,
+    price: extracted.price,
+    category: extracted.category,
+  });
 
   res.json(extracted);
-});
-
-export default router;
+}
