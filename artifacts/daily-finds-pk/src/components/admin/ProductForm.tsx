@@ -1,6 +1,6 @@
 import React from 'react';
 import { Product, Category, Badge, CATEGORIES, BADGES } from '../../types/product';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,32 +18,62 @@ const productSchema = z.object({
 
 type FormValues = z.infer<typeof productSchema>;
 
+export type ProductPrefill = {
+  name?: string | null;
+  price?: number | null;
+  description?: string | null;
+  imageUrl?: string | null;
+  category?: string | null;
+  affiliateLink?: string | null;
+};
+
 interface ProductFormProps {
   product?: Product | null;
+  prefill?: ProductPrefill | null;
   onSave: (data: Omit<Product, 'id' | 'createdAt'>) => void;
   onClose: () => void;
 }
 
-export function ProductForm({ product, onSave, onClose }: ProductFormProps) {
+export function ProductForm({ product, prefill, onSave, onClose }: ProductFormProps) {
+  const isImported = !product && !!prefill;
+
+  // Map category string from import to valid Category, fallback to 'Home Decor'
+  const normalizeCategory = (cat?: string | null): Category => {
+    if (!cat) return 'Home Decor';
+    return (CATEGORIES as string[]).includes(cat) ? (cat as Category) : 'Home Decor';
+  };
+
   const { register, handleSubmit, formState: { errors }, watch } = useForm<FormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: product ? {
-      name: product.name,
-      price: product.price,
-      description: product.description,
-      category: product.category,
-      badge: product.badge,
-      affiliateLink: product.affiliateLink,
-      imageUrl: product.imageUrl,
-    } : {
-      name: '',
-      price: 0,
-      description: '',
-      category: 'Home Decor',
-      badge: null,
-      affiliateLink: '',
-      imageUrl: '',
-    }
+    defaultValues: product
+      ? {
+          name: product.name,
+          price: product.price,
+          description: product.description,
+          category: product.category,
+          badge: product.badge,
+          affiliateLink: product.affiliateLink,
+          imageUrl: product.imageUrl,
+        }
+      : prefill
+      ? {
+          name: prefill.name ?? '',
+          price: prefill.price ?? 0,
+          description: prefill.description ?? '',
+          category: normalizeCategory(prefill.category),
+          badge: null,
+          affiliateLink: prefill.affiliateLink ?? '',
+          imageUrl: prefill.imageUrl ?? '',
+        }
+      : {
+          name: '',
+          price: 0,
+          description: '',
+          category: 'Home Decor',
+          badge: null,
+          affiliateLink: '',
+          imageUrl: '',
+        },
   });
 
   const previewImageUrl = watch('imageUrl');
@@ -58,7 +88,15 @@ export function ProductForm({ product, onSave, onClose }: ProductFormProps) {
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-card w-full max-w-2xl rounded-2xl shadow-xl border border-border flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">{product ? 'Edit Product' : 'Add New Product'}</h2>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">{product ? 'Edit Product' : 'Add New Product'}</h2>
+            {isImported && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <Sparkles className="h-3 w-3 text-primary" />
+                <span className="text-xs text-primary font-medium">Pre-filled from import — review and save</span>
+              </div>
+            )}
+          </div>
           <button onClick={onClose} className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
             <X className="h-5 w-5" />
           </button>
