@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm --filter @workspace/daily-finds-pk run build",
-  "outputDirectory": "artifacts/daily-finds-pk/dist/public",
+  "buildCommand": "pnpm --filter @workspace/daily-finds-pk run build && mkdir -p public && cp -r artifacts/daily-finds-pk/dist/public/. public/",
+  "outputDirectory": "public",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,
   "rewrites": [
