@@ -1,0 +1,1 @@
+- [Database setup — PostgreSQL via Drizzle, not Supabase JS client](supabase-db-note.md) — SUPABASE_URL/ANON_KEY not set; use DATABASE_URL + @workspace/db + drizzle-kit push for all DB work
