@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Product, Category, Badge, CATEGORIES, BADGES } from '../../types/product';
-import { X, Sparkles } from 'lucide-react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -30,11 +30,12 @@ export type ProductPrefill = {
 interface ProductFormProps {
   product?: Product | null;
   prefill?: ProductPrefill | null;
-  onSave: (data: Omit<Product, 'id' | 'createdAt'>) => void;
+  onSave: (data: Omit<Product, 'id' | 'createdAt'>) => Promise<void>;
   onClose: () => void;
 }
 
 export function ProductForm({ product, prefill, onSave, onClose }: ProductFormProps) {
+  const [isSaving, setIsSaving] = useState(false);
   const isImported = !product && !!prefill;
 
   // Map category string from import to valid Category, fallback to 'Home Decor'
@@ -78,10 +79,17 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
 
   const previewImageUrl = watch('imageUrl');
 
-  const onSubmit = (data: FormValues) => {
-    onSave(data as Omit<Product, 'id' | 'createdAt'>);
-    toast.success(product ? 'Product updated successfully' : 'Product added successfully');
-    onClose();
+  const onSubmit = async (data: FormValues) => {
+    setIsSaving(true);
+    try {
+      await onSave(data as Omit<Product, 'id' | 'createdAt'>);
+      toast.success(product ? 'Product updated successfully' : 'Product added successfully');
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save product. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -97,7 +105,11 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
               </div>
             )}
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+          <button
+            onClick={onClose}
+            disabled={isSaving}
+            className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground disabled:opacity-40"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -108,7 +120,8 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
               <label className="text-sm font-medium text-foreground">Product Name</label>
               <input
                 {...register('name')}
-                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                disabled={isSaving}
+                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all disabled:opacity-50"
                 placeholder="e.g. Fluted Glass Set"
               />
               {errors.name && <p className="text-destructive text-xs">{errors.name.message}</p>}
@@ -119,7 +132,8 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
               <input
                 type="number"
                 {...register('price')}
-                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                disabled={isSaving}
+                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all disabled:opacity-50"
                 placeholder="e.g. 1500"
               />
               {errors.price && <p className="text-destructive text-xs">{errors.price.message}</p>}
@@ -129,7 +143,8 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
               <label className="text-sm font-medium text-foreground">Category</label>
               <select
                 {...register('category')}
-                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                disabled={isSaving}
+                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all disabled:opacity-50"
               >
                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
@@ -140,7 +155,8 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
               <label className="text-sm font-medium text-foreground">Badge</label>
               <select
                 {...register('badge')}
-                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                disabled={isSaving}
+                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all disabled:opacity-50"
               >
                 <option value="">None</option>
                 {BADGES.filter(Boolean).map(badge => <option key={badge} value={badge!}>{badge}</option>)}
@@ -151,7 +167,8 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
               <label className="text-sm font-medium text-foreground">Affiliate Link URL</label>
               <input
                 {...register('affiliateLink')}
-                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                disabled={isSaving}
+                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all disabled:opacity-50"
                 placeholder="https://daraz.pk/..."
               />
               {errors.affiliateLink && <p className="text-destructive text-xs">{errors.affiliateLink.message}</p>}
@@ -161,7 +178,8 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
               <label className="text-sm font-medium text-foreground">Image URL</label>
               <input
                 {...register('imageUrl')}
-                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                disabled={isSaving}
+                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all disabled:opacity-50"
                 placeholder="https://images.unsplash.com/..."
               />
               {errors.imageUrl && <p className="text-destructive text-xs">{errors.imageUrl.message}</p>}
@@ -177,8 +195,9 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
               <label className="text-sm font-medium text-foreground">Description</label>
               <textarea
                 {...register('description')}
+                disabled={isSaving}
                 rows={3}
-                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
+                className="w-full p-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none disabled:opacity-50"
                 placeholder="Product details..."
               />
               {errors.description && <p className="text-destructive text-xs">{errors.description.message}</p>}
@@ -189,15 +208,24 @@ export function ProductForm({ product, prefill, onSave, onClose }: ProductFormPr
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl font-medium text-muted-foreground hover:bg-muted transition-colors"
+              disabled={isSaving}
+              className="px-5 py-2.5 rounded-xl font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-40"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              disabled={isSaving}
+              className="px-5 py-2.5 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center gap-2"
             >
-              {product ? 'Save Changes' : 'Add Product'}
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                product ? 'Save Changes' : 'Add Product'
+              )}
             </button>
           </div>
         </form>

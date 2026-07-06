@@ -45,11 +45,11 @@ export function Admin() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Product, 'id' | 'createdAt'>) => {
+  const handleSave = async (data: Omit<Product, 'id' | 'createdAt'>) => {
     if (editingProduct) {
-      updateProduct(editingProduct.id, data);
+      await updateProduct(editingProduct.id, data);
     } else {
-      addProduct(data);
+      await addProduct(data);
     }
   };
 

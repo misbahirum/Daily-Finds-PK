@@ -1,21 +1,29 @@
 import React, { useState } from 'react';
 import { Product } from '../../types/product';
-import { Edit2, Trash2, ExternalLink } from 'lucide-react';
+import { Edit2, Trash2, ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProductTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const confirmDelete = (id: string) => {
-    onDelete(id);
-    setDeleteId(null);
-    toast.success('Product deleted');
+  const confirmDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await onDelete(id);
+      setDeleteId(null);
+      toast.success('Product deleted');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete product');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (products.length === 0) {
@@ -79,13 +87,18 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                   <div className="flex items-center justify-end gap-2">
                     <button 
                       onClick={() => confirmDelete(product.id)}
-                      className="text-xs bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90"
+                      disabled={deletingId === product.id}
+                      className="text-xs bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 disabled:opacity-60 flex items-center gap-1"
                     >
+                      {deletingId === product.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : null}
                       Sure?
                     </button>
                     <button 
                       onClick={() => setDeleteId(null)}
-                      className="text-xs bg-muted text-muted-foreground px-3 py-1.5 rounded-md hover:bg-muted/80"
+                      disabled={deletingId === product.id}
+                      className="text-xs bg-muted text-muted-foreground px-3 py-1.5 rounded-md hover:bg-muted/80 disabled:opacity-40"
                     >
                       Cancel
                     </button>

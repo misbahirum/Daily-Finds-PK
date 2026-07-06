@@ -1,60 +1,74 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Product } from '../types/product';
 
-// v2: bumped to clear any legacy mock/seed data from v1
-const STORAGE_KEY = 'daily-finds-pk-products-v2';
+const API_BASE = '/api/products';
+
+async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as any).error ?? `Request failed: ${res.status}`);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setProducts(parsed);
-        } else {
-          // Corrupt data — start fresh
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      } catch {
-        // Invalid JSON — start fresh
-        localStorage.removeItem(STORAGE_KEY);
-      }
+  const fetchProducts = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await apiFetch<Product[]>(API_BASE);
+      setProducts(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load products');
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
-  const addProduct = (product: Omit<Product, 'id' | 'createdAt'>) => {
-    const newProduct: Product = {
-      ...product,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    const updated = [newProduct, ...products];
-    setProducts(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const addProduct = async (product: Omit<Product, 'id' | 'createdAt'>) => {
+    const newProduct = await apiFetch<Product>(API_BASE, {
+      method: 'POST',
+      body: JSON.stringify(product),
+    });
+    setProducts((prev) => [newProduct, ...prev]);
+    return newProduct;
   };
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    const updated = products.map(p => (p.id === id ? { ...p, ...updates } : p));
-    setProducts(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    const updated = await apiFetch<Product>(`${API_BASE}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    return updated;
   };
 
-  const deleteProduct = (id: string) => {
-    const updated = products.filter(p => p.id !== id);
-    setProducts(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  const deleteProduct = async (id: string) => {
+    await apiFetch<void>(`${API_BASE}/${id}`, { method: 'DELETE' });
+    setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
   return {
     products,
     isLoading,
+    error,
     addProduct,
     updateProduct,
     deleteProduct,
+    refetch: fetchProducts,
   };
 }
