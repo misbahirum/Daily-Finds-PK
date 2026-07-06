@@ -1,6 +1,6 @@
-# [Project name]
+# Daily Finds PK
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A mobile-first affiliate landing page for the Pakistani audience — curated home, kitchen, and lifestyle deals with a built-in admin panel and localStorage persistence.
 
 ## Run & Operate
 
@@ -30,7 +30,9 @@ _Populate as you build — non-obvious choices a reader couldn't infer from the 
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Homepage** (`/`): Hero, category filter bar, real-time search, product grid with badges (Best Seller / Hot Deal / New Arrival), WhatsApp share, copy-link, dark mode toggle, scroll-to-top
+- **Admin Panel** (`/admin`): Add, edit, delete products (name, price PKR, affiliate link, image URL, category, badge, description) — no login required
+- **Persistence**: All products stored in `localStorage` under `daily-finds-pk-products`; 9 seed products pre-loaded on first visit
 
 ## User preferences
 
