@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Daily Finds PK"
+version = "1.0.0"
+id = "artifacts/daily-finds-pk"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19001
+
+[services.development]
+run = "pnpm --filter @workspace/daily-finds-pk run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/daily-finds-pk", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/daily-finds-pk/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19001"
+BASE_PATH = "/"

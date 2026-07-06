@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: import
+    description: Product import operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /import/product:
+    post:
+      operationId: importProduct
+      tags: [import]
+      summary: Import product from URL
+      description: Scrapes a product URL and extracts name, price, image, description, and category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductImportInput"
+      responses:
+        "200":
+          description: Extracted product data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractedProduct"
+        "400":
+          description: Invalid or blocked URL (security/validation rejection)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportError"
+        "422":
+          description: Fetch or extraction failed (network error, non-HTML page, upstream failure)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +66,45 @@ components:
           type: string
       required:
         - status
-
+    ProductImportInput:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          description: The product URL to scrape
+    ExtractedProduct:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        affiliateLink:
+          type: string
+      required:
+        - affiliateLink
+    ImportError:
+      type: object
+      description: Error response from the import endpoint. May include affiliateLink for recoverable failures.
+      properties:
+        error:
+          type: string
+        affiliateLink:
+          type: ["string", "null"]
+      required:
+        - error
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

@@ -5,14 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
-
-export interface ProductImportInput {
-  /** The product URL to scrape */
-  url: string;
-}
 
 export interface ExtractedProduct {
   /** @nullable */
@@ -27,17 +19,3 @@ export interface ExtractedProduct {
   category?: string | null;
   affiliateLink: string;
 }
-
-/**
- * Error response from the import endpoint. May include affiliateLink for recoverable failures.
- */
-export interface ImportError {
-  error: string;
-  /** @nullable */
-  affiliateLink?: string | null;
-}
-
-export interface ApiError {
-  error: string;
-}
-
