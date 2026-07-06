@@ -15,9 +15,9 @@ export function ProductGrid({ products }: ProductGridProps) {
         <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mb-4">
           <PackageX className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-bold text-foreground">No products found</h3>
+        <h3 className="text-lg font-bold text-foreground">No products yet</h3>
         <p className="text-muted-foreground mt-2 max-w-sm">
-          We couldn't find any deals matching your criteria right now. Check back later!
+          New deals are coming soon. Check back later!
         </p>
       </div>
     );

@@ -91,7 +91,7 @@ export function ProductCard({ product, index }: ProductCardProps) {
             className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2.5 px-4 rounded-xl transition-colors"
             data-testid={`link-shop-${product.id}`}
           >
-            <span>Shop Now</span>
+            <span>Buy on Daraz</span>
             <ExternalLink className="h-4 w-4" />
           </a>
           
