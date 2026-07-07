@@ -60,7 +60,7 @@ export function ProductCard({ product, index }: ProductCardProps) {
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-4">
-        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+        <div className="text-xs font-semibold text-accent uppercase tracking-wide mb-1">
           {product.category}
         </div>
         <h3 className="text-sm font-bold text-foreground leading-tight line-clamp-2 mb-2 group-hover:text-primary transition-colors">

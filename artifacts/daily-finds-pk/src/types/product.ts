@@ -27,7 +27,7 @@ export const BADGES: Badge[] = ['Featured', 'Top Pick', 'New Arrival', 'Sale', n
 
 export const BADGE_CONFIG: Record<NonNullable<Badge>, { label: string; emoji: string; className: string }> = {
   'Featured':    { label: 'Featured',    emoji: '❤️', className: 'bg-green-500 text-white' },
-  'Top Pick':    { label: 'Top Pick',    emoji: '⭐', className: 'bg-amber-400 text-white' },
-  'New Arrival': { label: 'New Arrival', emoji: '🆕', className: 'bg-blue-500 text-white' },
-  'Sale':        { label: 'Sale',        emoji: '🔥', className: 'bg-red-500 text-white' },
+  'Top Pick':    { label: 'Top Pick',    emoji: '⭐', className: 'bg-yellow-400 text-yellow-900' },
+  'New Arrival': { label: 'New Arrival', emoji: '🆕', className: 'bg-green-100 text-green-700' },
+  'Sale':        { label: 'Sale',        emoji: '🔥', className: 'bg-orange-500 text-white' },
 };

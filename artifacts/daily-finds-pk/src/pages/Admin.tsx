@@ -208,7 +208,7 @@ export function Admin() {
         {/* Smart Import Banner */}
         <div
           onClick={handleOpenImport}
-          className="mb-6 cursor-pointer group bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/20 hover:border-primary/40 rounded-2xl p-5 flex items-center gap-4 transition-all hover:shadow-sm"
+          className="mb-6 cursor-pointer group bg-green-50 border border-primary/20 hover:border-primary/40 rounded-2xl p-5 flex items-center gap-4 transition-all hover:shadow-sm"
         >
           <div className="p-3 bg-primary/10 text-primary rounded-xl flex-shrink-0">
             <Sparkles className="h-5 w-5" />

@@ -9,9 +9,11 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <span className="text-xl font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
-            Daily <span className="text-primary">Finds</span> PK
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-xl font-bold tracking-tight">
+            <span className="text-foreground">Daily </span>
+            <span className="text-primary">Finds</span>
+            <span className="text-accent"> PK</span>
           </span>
         </Link>
 

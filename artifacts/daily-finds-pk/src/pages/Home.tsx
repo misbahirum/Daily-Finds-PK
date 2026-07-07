@@ -62,7 +62,7 @@ export function Home() {
           transition={{ duration: 0.5 }}
           className="text-center max-w-3xl mx-auto mb-12"
         >
-          <div className="inline-block mb-4 px-3 py-1 rounded-full bg-muted text-muted-foreground text-sm font-medium border border-border">
+          <div className="inline-block mb-4 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
             Daily Curated Deals 🇵🇰
           </div>
           <h1 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4 leading-tight">

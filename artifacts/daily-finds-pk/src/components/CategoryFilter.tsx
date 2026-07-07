@@ -38,7 +38,7 @@ function FilterButton({ active, onClick, children }: { active: boolean, onClick:
       className={`relative px-4 py-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap ${
         active 
           ? 'text-primary-foreground' 
-          : 'text-muted-foreground bg-card hover:bg-muted hover:text-foreground border border-border'
+          : 'text-muted-foreground bg-card hover:bg-primary hover:text-primary-foreground border border-border transition-colors'
       }`}
       data-testid={`filter-${children?.toString().replace(/\s+/g, '-').toLowerCase()}`}
     >
