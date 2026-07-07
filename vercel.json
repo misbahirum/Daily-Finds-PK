@@ -3,7 +3,7 @@
   "outputDirectory": "public",
   "functions": {
     "api/**/*.ts": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@5.8.22"
     }
   },
   "rewrites": [
