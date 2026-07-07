@@ -1,0 +1,319 @@
+You are working on my production project "Daily Finds PK".
+
+IMPORTANT:
+Do NOT create a new project.
+Do NOT change the existing architecture.
+Modify the existing code only.
+Preserve all existing functionality.
+
+The project should become a real Instagram affiliate store (similar to Linktree) where visitors only browse products and click "Buy on Daraz".
+
+====================================================
+1. HOMEPAGE
+====================================================
+
+Redesign homepage into a premium affiliate storefront.
+
+Hero Section:
+
+Daily Finds PK
+
+Best Home, Kitchen & Lifestyle Deals in Pakistan
+
+Search bar
+
+Category chips
+
+Responsive layout
+
+Below that display products.
+
+NO admin controls should appear on homepage.
+
+====================================================
+2. HIDDEN ADMIN
+====================================================
+
+Hide Admin completely.
+
+Requirements:
+
+• Remove every Admin button.
+
+• Remove Admin from navigation.
+
+• Homepage visitors must never know Admin exists.
+
+Admin should only work through direct URL.
+
+====================================================
+3. PRODUCT CARDS
+====================================================
+
+Each product card should contain ONLY:
+
+Product Image
+
+Category
+
+Title
+
+Description
+
+Price
+
+Badge (optional)
+
+One button only:
+
+BUY ON DARAZ
+
+Remove:
+
+Copy icon
+
+Chat icon
+
+Share icon
+
+Wishlist icon
+
+Every extra button.
+
+====================================================
+4. FIX IMAGE LOADING
+====================================================
+
+Current images sometimes fail.
+
+Fix image rendering.
+
+Support:
+
+Daraz image URLs
+
+HTTPS images
+
+If image fails:
+
+Show elegant placeholder:
+
+"No Image Available"
+
+Never show broken image icon.
+
+====================================================
+5. PRODUCT BADGES
+====================================================
+
+Allow Admin to mark products as:
+
+Featured ❤️
+
+Top Pick ⭐
+
+New Arrival 🆕
+
+Sale 🔥
+
+Homepage should display beautiful badges.
+
+====================================================
+6. HOMEPAGE SECTIONS
+====================================================
+
+Automatically create sections:
+
+Featured Products
+
+Top Picks
+
+New Arrivals
+
+Sale Deals
+
+Latest Products
+
+Hide sections with no products.
+
+====================================================
+7. CLICK COUNTER
+====================================================
+
+Whenever Buy on Daraz is clicked:
+
+Increase click count.
+
+Store clicks in PostgreSQL.
+
+Admin dashboard should display:
+
+Total Clicks
+
+Most Clicked Product
+
+Clicks per Product
+
+====================================================
+8. ADMIN PANEL
+====================================================
+
+Dashboard cards:
+
+Total Products
+
+Featured Products
+
+Categories
+
+Total Clicks
+
+Latest Product
+
+Most Clicked
+
+====================================================
+9. PRODUCT FORM
+====================================================
+
+Fields:
+
+Title
+
+Description
+
+Price
+
+Category
+
+Image URL
+
+Affiliate Link
+
+Featured
+
+Top Pick
+
+New Arrival
+
+Sale
+
+Save
+
+====================================================
+10. DATABASE
+====================================================
+
+Homepage MUST load from PostgreSQL.
+
+Completely remove:
+
+localStorage
+
+mock data
+
+seed products
+
+dummy products
+
+Homepage and Admin must use the same database.
+
+====================================================
+11. RESPONSIVE DESIGN
+====================================================
+
+Make mobile-first.
+
+Instagram style.
+
+Cards stack correctly.
+
+Images responsive.
+
+Button full width.
+
+====================================================
+12. BUY BUTTON
+====================================================
+
+Buy on Daraz button should:
+
+Open affiliate link
+
+Open in new tab
+
+Use:
+
+target="_blank"
+
+rel="noopener noreferrer"
+
+====================================================
+13. EMPTY STATE
+====================================================
+
+If database empty show:
+
+"No deals available yet.
+
+New affiliate products are coming soon."
+
+====================================================
+14. ADMIN SECURITY
+====================================================
+
+Homepage users cannot discover admin.
+
+No admin buttons.
+
+No admin links.
+
+Require confirmation before deleting products.
+
+====================================================
+15. PERFORMANCE
+====================================================
+
+Lazy load images.
+
+Improve loading speed.
+
+Prevent layout shifts.
+
+====================================================
+16. FINAL CHECK
+====================================================
+
+Verify:
+
+✔ Homepage loads database products
+
+✔ Admin CRUD works
+
+✔ Images display correctly
+
+✔ Buy button works
+
+✔ Click counter works
+
+✔ Featured badge works
+
+✔ Sale badge works
+
+✔ Top Pick works
+
+✔ New Arrival works
+
+✔ Hidden Admin works
+
+✔ Mobile responsive
+
+✔ Zero TypeScript errors
+
+✔ Production build passes
+
+Commit everything.
+
+Push to GitHub main.
+
+Do NOT stop until everything above is completed successfully.

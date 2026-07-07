@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { productsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 const productsRouter = Router();
 
@@ -16,6 +16,7 @@ function toProduct(row: typeof productsTable.$inferSelect) {
     badge: row.badge ?? null,
     affiliateLink: row.affiliateLink,
     imageUrl: row.imageUrl,
+    clickCount: row.clickCount ?? 0,
     createdAt: row.createdAt instanceof Date
       ? row.createdAt.toISOString()
       : String(row.createdAt),
@@ -28,10 +29,55 @@ productsRouter.get("/products", async (_req, res) => {
     const rows = await db
       .select()
       .from(productsTable)
-      .orderBy(productsTable.createdAt);
-    res.json(rows.map(toProduct).reverse());
+      .orderBy(desc(productsTable.createdAt));
+    res.json(rows.map(toProduct));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+// GET /api/stats
+productsRouter.get("/stats", async (_req, res) => {
+  try {
+    const rows = await db
+      .select()
+      .from(productsTable)
+      .orderBy(desc(productsTable.createdAt));
+
+    const totalClicks = rows.reduce((sum, r) => sum + (r.clickCount ?? 0), 0);
+    const sortedByClicks = [...rows].sort((a, b) => (b.clickCount ?? 0) - (a.clickCount ?? 0));
+    const mostClicked = sortedByClicks[0] ?? null;
+    const latestProduct = rows[0] ?? null;
+
+    res.json({
+      totalProducts: rows.length,
+      totalClicks,
+      featuredCount: rows.filter(r => r.badge === "Featured").length,
+      categoriesCount: new Set(rows.map(r => r.category)).size,
+      mostClicked: mostClicked ? toProduct(mostClicked) : null,
+      latestProduct: latestProduct ? toProduct(latestProduct) : null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
+// POST /api/products/:id/click
+productsRouter.post("/products/:id/click", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [row] = await db
+      .update(productsTable)
+      .set({ clickCount: sql`${productsTable.clickCount} + 1` })
+      .where(eq(productsTable.id, id))
+      .returning();
+    if (!row) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+    res.json({ clickCount: row.clickCount });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to track click" });
   }
 });
 

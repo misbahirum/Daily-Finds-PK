@@ -39,7 +39,7 @@ export function useProducts() {
     fetchProducts();
   }, [fetchProducts]);
 
-  const addProduct = async (product: Omit<Product, 'id' | 'createdAt'>) => {
+  const addProduct = async (product: Omit<Product, 'id' | 'createdAt' | 'clickCount'>) => {
     const newProduct = await apiFetch<Product>(API_BASE, {
       method: 'POST',
       body: JSON.stringify(product),
