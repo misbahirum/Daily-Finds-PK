@@ -1,15 +1,44 @@
 ---
-name: Database setup — PostgreSQL via Drizzle, not Supabase JS client
-description: The project uses Replit's managed PostgreSQL (DATABASE_URL) with Drizzle ORM, not the Supabase JS client. SUPABASE_URL and SUPABASE_ANON_KEY are not configured.
+name: Database setup — PostgreSQL via Drizzle
+description: How the DB is configured, schema columns, and what's been pushed
 ---
 
-The user asked for "Supabase" but the project uses Replit's managed PostgreSQL (DATABASE_URL points to `helium`, a Replit-internal host). `SUPABASE_URL` and `SUPABASE_ANON_KEY` are NOT set.
+## Rule
+Use `DATABASE_URL` + `@workspace/db` + Drizzle ORM for all DB work. The Supabase JS client is NOT used — `SUPABASE_URL`/`SUPABASE_ANON_KEY` are not set.
 
-**What is configured:**
-- `DATABASE_URL` — Replit managed PostgreSQL
-- `@workspace/db` lib with Drizzle ORM + pg pool
-- `lib/db/src/schema/products.ts` — Drizzle schema, pushed via `pnpm --filter @workspace/db run push`
+**Why:** User mentioned Supabase but only `DATABASE_URL` (pointing to Replit's internal PostgreSQL on host `helium`) is configured. The existing `@workspace/db` lib uses Drizzle + pg and is the established pattern.
 
-**Why:** When the user added Supabase secrets, only `sb_publishable_smfiB1niT0paXnpFkkpfrg_GjjDIZFt` was set as the secret NAME (not value). The correct env var names were never configured.
+## Schema — `products` table (pushed as of 2026-07-07)
 
-**How to apply:** For any future DB work, use `@workspace/db` and Drizzle. To run DDL, use `pnpm --filter @workspace/db run push`. Production builds need `PORT=19001 BASE_PATH=/ pnpm --filter @workspace/daily-finds-pk run build`.
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK, defaultRandom() |
+| name | text | notNull |
+| price | numeric(12,2) | notNull |
+| description | text | notNull |
+| category | text | notNull |
+| badge | text | nullable — values: Featured / Top Pick / New Arrival / Sale |
+| affiliate_link | text | notNull (camelCase: affiliateLink) |
+| image_url | text | notNull (camelCase: imageUrl) |
+| click_count | integer | notNull, default 0 (camelCase: clickCount) — added 2026-07-07 |
+| created_at | timestamp | defaultNow() |
+
+## After schema changes
+Always run `cd lib/db && npx drizzle-kit push` and then `cd lib/db && npx tsc --build` to refresh declaration files for the api-server package.
+
+## How to apply
+- Run `drizzle-kit push` from `lib/db/` for any schema change.
+- Run `npx tsc --build` in `lib/db/` after schema changes to update dist declarations before TypeScript checks.
+- The `@workspace/db` package exports source TS directly via `exports` map (no compile needed for Vite dev), but `dist/` declarations must be rebuilt for the api-server tsc check.
+
+## API routes added (2026-07-07)
+- `GET /api/products` — list all, ordered by created_at desc
+- `POST /api/products` — create
+- `PUT /api/products/:id` — update
+- `DELETE /api/products/:id` — delete
+- `POST /api/products/:id/click` — increment click_count (fire-and-forget from frontend)
+- `GET /api/stats` — { totalProducts, totalClicks, featuredCount, categoriesCount, mostClicked, latestProduct }
+- `GET /api` — healthcheck 200
+
+## Security note
+Write endpoints (POST/PUT/DELETE products) are currently unauthenticated. Admin panel is hidden (no nav link) but /admin URL is accessible to anyone. Adding auth is a future task.
