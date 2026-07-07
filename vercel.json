@@ -1,0 +1,4 @@
+{
+  "buildCommand": "pnpm --filter @workspace/daily-finds-pk run build && mkdir -p public && cp -r artifacts/daily-finds-pk/dist/public/. public/",
+  "outputDirectory": "public"
+}
