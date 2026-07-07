@@ -135,7 +135,7 @@ export function Admin() {
 
           {/* Featured */}
           <div className="bg-card border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm">
-            <div className="p-3 bg-rose-500/10 text-rose-500 rounded-xl flex-shrink-0">
+            <div className="p-3 bg-primary/10 text-primary rounded-xl flex-shrink-0">
               <Star className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -159,7 +159,7 @@ export function Admin() {
 
           {/* Total Clicks */}
           <div className="bg-card border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm">
-            <div className="p-3 bg-green-500/10 text-green-600 rounded-xl flex-shrink-0">
+            <div className="p-3 bg-primary/10 text-primary rounded-xl flex-shrink-0">
               <MousePointerClick className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -170,7 +170,7 @@ export function Admin() {
 
           {/* Most Clicked */}
           <div className="bg-card border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm">
-            <div className="p-3 bg-orange-500/10 text-orange-500 rounded-xl flex-shrink-0">
+            <div className="p-3 bg-muted text-muted-foreground rounded-xl flex-shrink-0">
               <TrendingUp className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -188,7 +188,7 @@ export function Admin() {
 
           {/* Latest Product */}
           <div className="bg-card border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm">
-            <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl flex-shrink-0">
+            <div className="p-3 bg-muted text-muted-foreground rounded-xl flex-shrink-0">
               <Clock className="h-5 w-5" />
             </div>
             <div className="min-w-0">
