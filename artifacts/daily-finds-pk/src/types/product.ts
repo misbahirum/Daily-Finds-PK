@@ -26,8 +26,8 @@ export const CATEGORIES: Category[] = [
 export const BADGES: Badge[] = ['Featured', 'Top Pick', 'New Arrival', 'Sale', null];
 
 export const BADGE_CONFIG: Record<NonNullable<Badge>, { label: string; emoji: string; className: string }> = {
-  'Featured':    { label: 'Featured',    emoji: '❤️', className: 'bg-primary text-primary-foreground' },
-  'Top Pick':    { label: 'Top Pick',    emoji: '⭐', className: 'bg-accent text-accent-foreground' },
-  'New Arrival': { label: 'New Arrival', emoji: '🆕', className: 'bg-secondary text-secondary-foreground border border-border' },
-  'Sale':        { label: 'Sale',        emoji: '🔥', className: 'bg-destructive text-destructive-foreground' },
+  'Featured':    { label: 'Featured',    emoji: '❤️', className: 'bg-green-500 text-white' },
+  'Top Pick':    { label: 'Top Pick',    emoji: '⭐', className: 'bg-amber-400 text-white' },
+  'New Arrival': { label: 'New Arrival', emoji: '🆕', className: 'bg-blue-500 text-white' },
+  'Sale':        { label: 'Sale',        emoji: '🔥', className: 'bg-red-500 text-white' },
 };

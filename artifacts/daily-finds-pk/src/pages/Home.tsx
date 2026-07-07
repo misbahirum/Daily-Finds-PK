@@ -62,7 +62,7 @@ export function Home() {
           transition={{ duration: 0.5 }}
           className="text-center max-w-3xl mx-auto mb-12"
         >
-          <div className="inline-block mb-4 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold">
+          <div className="inline-block mb-4 px-3 py-1 rounded-full bg-muted text-muted-foreground text-sm font-medium border border-border">
             Daily Curated Deals 🇵🇰
           </div>
           <h1 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4 leading-tight">
@@ -107,7 +107,7 @@ export function Home() {
                   <div className="flex items-center gap-3 mb-6">
                     <span className="text-2xl">{cfg.emoji}</span>
                     <h2 className="text-xl font-bold text-foreground">{sec.title}</h2>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${cfg.className}`}>
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
                       {sec.products.length}
                     </span>
                   </div>
