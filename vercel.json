@@ -1,6 +1,11 @@
 {
   "buildCommand": "pnpm --filter @workspace/daily-finds-pk run build && mkdir -p public && cp -r artifacts/daily-finds-pk/dist/public/. public/",
   "outputDirectory": "public",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@3.0.0"
+    }
+  },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
